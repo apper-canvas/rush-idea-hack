@@ -4,6 +4,7 @@ import GameCanvas from '@/components/organisms/GameCanvas'
 import GameHUD from '@/components/organisms/GameHUD'
 import GameOverModal from '@/components/organisms/GameOverModal'
 import StartScreen from '@/components/organisms/StartScreen'
+import VirtualKeyboard from '@/components/organisms/VirtualKeyboard'
 import { gameStateService, soundService } from '@/services'
 
 function GamePage() {
@@ -19,20 +20,33 @@ function GamePage() {
   const [gameOver, setGameOver] = useState(false)
   const [showStart, setShowStart] = useState(true)
   const [fallingLetters, setFallingLetters] = useState([])
-  const [particles, setParticles] = useState([])
+const [particles, setParticles] = useState([])
   const [screenShake, setScreenShake] = useState(false)
-
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const gameLoopRef = useRef()
   const letterSpawnRef = useRef()
   const canvasRef = useRef()
 
-  // Initialize game state
+// Initialize game state and detect mobile
   useEffect(() => {
     const initializeGame = async () => {
       const state = await gameStateService.getGameState()
       setGameState(state)
     }
+    
+    // Mobile detection
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (window.innerWidth <= 768 && 'ontouchstart' in window)
+      setIsMobile(isMobileDevice)
+    }
+    
     initializeGame()
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   // Game loop for updating falling letters and particles
@@ -104,24 +118,29 @@ function GamePage() {
     }
   }, [fallingLetters])
 
-  // Keyboard input handling
+// Keyboard input handling
   useEffect(() => {
     const handleKeyPress = async (event) => {
       if (!gameState.isPlaying) return
 
       const pressedKey = event.key.toUpperCase()
-      const matchingLetter = fallingLetters.find(letter => letter.letter === pressedKey)
-
-      if (matchingLetter) {
-        // Hit!
-        await handleHit(matchingLetter)
-        setFallingLetters(prev => prev.filter(letter => letter.id !== matchingLetter.id))
-      }
+      await processKeyInput(pressedKey)
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [gameState.isPlaying, fallingLetters])
+
+  // Process key input (both physical and virtual)
+  const processKeyInput = async (pressedKey) => {
+    const matchingLetter = fallingLetters.find(letter => letter.letter === pressedKey)
+
+    if (matchingLetter) {
+      // Hit!
+      await handleHit(matchingLetter)
+      setFallingLetters(prev => prev.filter(letter => letter.id !== matchingLetter.id))
+    }
+  }
 
   const handleHit = async (letter) => {
     const newState = await gameStateService.incrementScore(1 + gameState.combo)
@@ -181,16 +200,23 @@ function GamePage() {
     setGameOver(false)
     setShowStart(false)
   }
-
-  const restartGame = async () => {
+const restartGame = async () => {
     setGameOver(false)
     await startGame()
   }
 
-  return (
+  const toggleVirtualKeyboard = () => {
+    setShowVirtualKeyboard(prev => !prev)
+  }
+
+return (
     <div className={`h-screen bg-background relative overflow-hidden ${screenShake ? 'animate-screen-shake' : ''}`}>
       {/* Game HUD */}
-      <GameHUD gameState={gameState} />
+      <GameHUD 
+        gameState={gameState} 
+        onToggleKeyboard={isMobile ? toggleVirtualKeyboard : null}
+        showKeyboard={showVirtualKeyboard}
+      />
       
       {/* Game Canvas */}
       <GameCanvas
@@ -214,8 +240,17 @@ function GamePage() {
             gameState={gameState}
             onRestart={restartGame}
           />
-        )}
+)}
       </AnimatePresence>
+      
+      {/* Virtual Keyboard */}
+      {isMobile && (
+        <VirtualKeyboard
+          isVisible={showVirtualKeyboard}
+          onKeyPress={processKeyInput}
+          onClose={() => setShowVirtualKeyboard(false)}
+        />
+      )}
     </div>
   )
 }
