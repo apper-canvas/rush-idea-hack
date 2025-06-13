@@ -7,8 +7,9 @@ import Button from '@/components/atoms/Button'
 function GameHUD({ gameState, onToggleKeyboard, showKeyboard }) {
   const accuracy = gameState.hits + gameState.misses > 0 
     ? Math.round((gameState.hits / (gameState.hits + gameState.misses)) * 100)
-    : 100
-return (
+: 100
+
+  return (
     <motion.div
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -46,10 +47,6 @@ return (
               {showKeyboard ? '⌨️ Hide' : '⌨️ Show'} Keyboard
             </Button>
           )}
-        </div>
-      </div>
-    </motion.div>
-  )
         </div>
       </div>
     </motion.div>
