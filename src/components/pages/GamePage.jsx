@@ -90,7 +90,7 @@ const newLetter = {
         id: Date.now(),
         letter: letters[Math.floor(Math.random() * letters.length)],
         x: Math.random() * (window.innerWidth - 100) + 50,
-        y: -150,
+        y: -100 - Math.random() * 200, // Random spawn distance from -100 to -300
         speed: 2 + Math.random() * 2,
         color: colors[Math.floor(Math.random() * colors.length)]
       }
