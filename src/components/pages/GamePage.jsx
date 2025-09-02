@@ -86,11 +86,11 @@ const [particles, setParticles] = useState([])
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       const colors = ['#00FFFF', '#FF00FF', '#FFFF00', '#00FF88', '#FF8800', '#00AAFF']
       
-      const newLetter = {
+const newLetter = {
         id: Date.now(),
         letter: letters[Math.floor(Math.random() * letters.length)],
         x: Math.random() * (window.innerWidth - 100) + 50,
-        y: -50,
+        y: -150,
         speed: 2 + Math.random() * 2,
         color: colors[Math.floor(Math.random() * colors.length)]
       }
